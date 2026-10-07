@@ -1,106 +1,78 @@
 import { useState } from 'react'
-
 import './App.css'
 
 function App() {
-  const [search, setSearch]= useState("");
-  const [meal, setMeal]= useState([]);
+  const [search, setSearch] = useState("");
+  const [meal, setMeal] = useState([]);
+  const [smeal, setsMeal] = useState(null);
 
   const handleSearch = async() =>{
-    const response= await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?f=${search}`);
-    const data= await response.json();
+    const response = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?f=${search}`);
+    const data = await response.json();
     if(data.meals){
       setMeal(data.meals);
     }
     else{
       setMeal([]);
-      alert("Meal not found");
+      alert("meal not found");
     }
-  };
+  }
+
+  const MealDeatils= async(id)=>{
+    const response = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
+    const data = await response.json();
+    setsMeal(data.meals[0])
+  }
+
+  const getIngredients = (meal)=>{
+    const ingredients = [];
+    for(let i=1; i<=20; i++){
+      const ingredient = meal[`strIngredient${i}`];
+      const measure = meal[`strMeasure${i}`];
+      if(ingredient)
+        ingredients.push(`${ingredient} - ${measure}`);
+    }
+    return ingredients;
+  }
 
   return (
     <div>
       <h2>Meal Search</h2>
-      <input type="text" placeholder="Search by first letter" maxLength="1" value={search} onChange={(e)=> setSearch(e.target.value)} />
-      <button onClick={handleSearch}> search </button>
+      <input type="text" placeholder="search by first letter" maxLength="1" value={search} onChange={(e)=>setSearch(e.target.value)} />
+      <button onClick={handleSearch}> search</button>
 
-      {meal.map((meal)=>(
-        <div key={meal.idMeal} >
-          <h2>{meal.strMeal}</h2>
-          <img src={meal.strMealThumb} alt={meal.strMeal} width="300" />
+      {meal.map((item)=>(
+        <div key={item.idMeal}>
+          <h2 key={item.idMeal} onClick={()=> MealDeatils(item.idMeal)}> {item.strMeal} </h2>
 
-          <p>Catagory: {meal.strCategory}</p>
-          <p>Area: {meal.strArea}</p>
-          <p>Instruction: {meal.strInstruction}</p>
+          {/*<img src={item.strMealThumb} alt="" width="250px" />
+          <p>Category: {item.strCategory}</p>
+          <p>Area: {item.strArea}</p>
+          <p>Instruction: {item.strInstructions}</p>*/}
         </div>
       ))}
-    </div>
-  );
 
-  
-}
-
-export default App
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-import { useState } from 'react'
-
-import './App.css'
-
-function App() {
-  const [search, setSearch]= useState("");
-  const [meal, setMeal]= useState(null);
-
-  const handleSearch = async() =>{
-    const response= await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${search}`);
-    const data= await response.json();
-    if(data.meals){
-      setMeal(data.meals[0]);
-    }
-    else{
-      setMeal(null);
-      alert("Meal not found");
-    }
-  };
-
-  return (
-    <div>
-      <h2>Meal Search</h2>
-      <input type="text" placeholder="Search by meal name" value={search} onChange={(e)=> setSearch(e.target.value)} />
-      <button onClick={handleSearch}> search </button>
-
-      {meal && (
+      {smeal && (
         <div>
-          <h2>{meal.strMeal}</h2>
-          <img src={meal.strMealThumb} alt={meal.strMeal} width="300" />
-
-          <p>Catagory: {meal.strCategory}</p>
-          <p>Area: {meal.strArea}</p>
-          <p>Instruction: {meal.strInstructions}</p>
+          <h2>{smeal.strMeal}</h2>
+          <img src={smeal.strMealThumb} alt="" width="300px"/>
+          <p>Category: {smeal.strCategory}</p>
+          <p>Area: {smeal.strArea}</p>
+          <p>Country: {smeal.strCountry}</p>
+          <p>Instruction: {smeal.strInstructions}</p>
+          <p>TAg: {smeal.strTags}</p>
+          <p>video link: {smeal.strYoutube}</p>
+          <p>{getIngredients(smeal)}</p>
+          <ol>
+            {getIngredients(smeal).map((item, index)=>(
+              <li>{item}</li>
+            ))}
+          </ol>
         </div>
       )}
     </div>
-  );
+  )
 
-  
 }
 
 export default App
-*/
