@@ -1,0 +1,1017 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#123b2b">
+<title>Bike Fuel Log</title>
+<style>
+:root{--green:#123b2b;--lime:#c9f36a;--bg:#f4f7f3;--ink:#17231d;--muted:#68756d;--card:#fff;--line:#e0e8e1;--red:#b42318}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Noto Sans Bengali",sans-serif}
+body.modal-open{overflow:hidden}
+header{background:var(--green);color:#fff;padding:24px 18px 30px;border-radius:0 0 24px 24px}
+.wrap{max-width:760px;margin:auto;padding:0 14px}header .eyebrow{font-size:12px;letter-spacing:1.5px;color:var(--lime);font-weight:700}h1{font-size:26px;margin:6px 0}header p{margin:0;color:#d7e5da;font-size:14px}
+main{padding:16px 0 34px}.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:-5px}
+.card,.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px;box-shadow:0 3px 12px #173b2910}
+.stat-label{font-size:12px;color:var(--muted)}.stat-value{font-size:23px;font-weight:800;margin-top:4px;overflow-wrap:anywhere}.stat-unit{font-size:12px;color:var(--muted)}
+.panel{margin-top:14px}.panel h2{font-size:18px;margin:0 0 12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}label{font-size:13px;font-weight:650}input,textarea,select{width:100%;border:1px solid #cfd9d0;border-radius:10px;padding:12px;font:inherit;background:#fff;color:var(--ink)}input:focus,textarea:focus,select:focus{outline:2px solid #a5d66a;border-color:#78a84b}
+button,.file-label{border:0;border-radius:11px;padding:12px 14px;font:inherit;font-weight:750;cursor:pointer;display:inline-flex;justify-content:center;align-items:center;gap:7px}.primary{background:var(--green);color:#fff;width:100%;margin-top:13px}.secondary{background:#e9f2e9;color:var(--green)}.danger{background:#fff0ef;color:var(--red)}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.hint{font-size:12px;color:var(--muted);line-height:1.5;margin:10px 0 0}
+button:disabled{opacity:.6;cursor:wait}
+.record{padding:13px 0;border-top:1px solid var(--line)}.record:first-child{border-top:0}.record-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.record-date{font-size:12px;color:var(--muted)}.record-main{font-weight:750}.record-meta{font-size:13px;color:var(--muted);margin-top:5px;line-height:1.6}.record-cost{font-weight:800;white-space:nowrap}.empty{text-align:center;color:var(--muted);padding:20px 0;font-size:14px}.message{display:none;margin-top:10px;padding:10px;border-radius:9px;font-size:13px}.message.show{display:block}.message.ok{background:#e8f6e8;color:#1c642c}.message.err{background:#fff0ef;color:var(--red)}footer{text-align:center;color:var(--muted);font-size:12px;padding:0 0 100px}
+@media(min-width:600px){.stats{grid-template-columns:repeat(4,minmax(0,1fr))}.stat-value{font-size:21px}}@media(max-width:390px){.grid{grid-template-columns:1fr}.field.full{grid-column:auto}.stat-value{font-size:20px}}
+
+/* ---- নতুন: পেজ ও নেভিগেশন ---- */
+.page{display:none}.page.active{display:block}
+.bottom-nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);z-index:20;box-shadow:0 -4px 16px #173b2912;padding-bottom:env(safe-area-inset-bottom)}
+.nav-in{max-width:760px;margin:auto;display:flex;padding:6px 6px}
+.bottom-nav a{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:12px;text-decoration:none;color:var(--muted);font-size:11px;font-weight:650;white-space:nowrap}
+.bottom-nav a .ni{font-size:19px;line-height:1.1}
+.bottom-nav a.active{background:#e9f2e9;color:var(--green)}
+.bottom-nav a:focus-visible{outline:2px solid #78a84b}
+
+/* ---- নতুন: তালিকা, ব্যাজ, মোডাল, টোস্ট ---- */
+.record-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.item{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}.item:first-child{border-top:0}
+.item-main{min-width:0}.item-title{font-weight:700;overflow-wrap:anywhere}.item-sub{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
+.item-btns{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
+.mini{padding:8px 10px;font-size:13px;border-radius:9px}
+.badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}.badge{font-size:11px;padding:2px 8px;border-radius:99px;background:#eef3ee;color:var(--muted);font-weight:650}.badge.lock{background:#fff6dc;color:#8a5a00}
+.sub-title{font-size:15px;font-weight:750;margin:0 0 4px}.divider{border:0;border-top:1px solid var(--line);margin:18px 0}
+.check{display:flex;align-items:center;gap:8px;font-weight:600}.check input{width:auto}
+.plain{margin:6px 0 0;padding-left:18px;font-size:13px;color:var(--muted);line-height:1.7}
+.sum-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:4px}
+.sum-grid div{background:#f4f7f3;border-radius:11px;padding:10px}.sum-grid b{display:block;font-size:17px;margin-top:2px}.sum-grid span{font-size:12px;color:var(--muted)}
+.modal-back{position:fixed;inset:0;background:#0a1a1299;display:flex;align-items:flex-end;justify-content:center;z-index:50}
+.modal-back[hidden]{display:none}
+.modal{background:#fff;width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+.modal h2{font-size:18px;margin:0 0 14px}
+.modal-actions{display:flex;gap:8px;margin-top:14px}.modal-actions button{flex:1}.modal-actions .primary{margin:0;width:auto}
+@media(min-width:600px){.modal-back{align-items:center}.modal{border-radius:20px}}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 14px;border-radius:12px;font-size:13px;max-width:92%;z-index:60;display:none;text-align:center}
+.toast.show{display:block}.toast.err{background:var(--red)}
+
+
+/* নিচের fixed navigation-এর জন্য অতিরিক্ত জায়গা */
+main.wrap {padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+footer.wrap { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+
+</style>
+</head>
+<body>
+<header><div class="wrap"><div class="eyebrow">YOUR PERSONAL BIKE TRACKER</div><h1>🏍️ বাইক ফুয়েল লগ</h1><p>মাইলেজ, জ্বালানি খরচ ও প্রতিটি রিফিলের হিসাব এক জায়গায়</p></div></header>
+
+<main class="wrap">
+
+  <!-- ১. হোম / ড্যাশবোর্ড -->
+  <div class="page" data-page="home">
+    <section class="stats">
+      <div class="card"><div class="stat-label">গড় মাইলেজ</div><div class="stat-value" id="avgMileage">—</div><div class="stat-unit">কিমি / লিটার</div></div>
+      <div class="card"><div class="stat-label">মোট জ্বালানি খরচ</div><div class="stat-value" id="totalCost">৳0</div><div class="stat-unit">সব রেকর্ড মিলিয়ে</div></div>
+      <div class="card"><div class="stat-label">মোট কেনা তেল</div><div class="stat-value" id="totalLitres">0</div><div class="stat-unit">লিটার</div></div>
+      <div class="card"><div class="stat-label">প্রতি কিমিতে খরচ</div><div class="stat-value" id="costPerKm">—</div><div class="stat-unit">টাকা / কিমি</div></div>
+    </section>
+    <section class="panel">
+      <h2>🏍️ আপনার বাইক</h2>
+      <div id="homeBike"></div>
+    </section>
+    <section class="panel">
+      <h2>⛽ সর্বশেষ রিফিল</h2>
+      <div id="lastRefill"></div>
+      <div class="actions">
+        <button class="secondary" type="button" data-go="entry">➕ নতুন রেকর্ড</button>
+        <button class="secondary" type="button" data-go="records">📋 সব রেকর্ড</button>
+        <button class="secondary" type="button" data-go="reports">📊 রিপোর্ট</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ২. ব্যক্তিগত তথ্য -->
+  <div class="page" data-page="profile">
+    <section class="panel">
+      <h2>👤 ব্যক্তিগত তথ্য ও বাইকের বিবরণ</h2>
+      <form id="profileForm">
+        <div class="grid">
+          <div class="field"><label for="ownerName">মালিকের নাম</label><input id="ownerName" type="text" maxlength="100" placeholder="আপনার নাম"></div>
+          <div class="field"><label for="phone">মোবাইল নম্বর (ঐচ্ছিক)</label><input id="phone" type="tel" maxlength="25" placeholder="01XXXXXXXXX"></div>
+          <div class="field"><label for="bikeName">বাইকের নাম / মডেল</label><input id="bikeName" type="text" maxlength="100" placeholder="যেমন Honda XBlade"></div>
+          <div class="field"><label for="bikeReg">রেজিস্ট্রেশন নম্বর (ঐচ্ছিক)</label><input id="bikeReg" type="text" maxlength="40" placeholder="যেমন ঢাকা মেট্রো-ল ১২-৩৪৫৬"></div>
+          <div class="field"><label for="engineCC">ইঞ্জিন ক্ষমতা (CC)</label><input id="engineCC" type="number" min="0" max="5000" step="1" placeholder="যেমন 160"></div>
+          <div class="field"><label for="purchaseYear">কেনার বছর</label><input id="purchaseYear" type="number" min="1950" max="2100" step="1" placeholder="যেমন 2024"></div>
+          <div class="field full"><label for="profileNote">অতিরিক্ত তথ্য (ঐচ্ছিক)</label><textarea id="profileNote" rows="2" maxlength="500" placeholder="নিজের জন্য প্রয়োজনীয় নোট"></textarea></div>
+        </div>
+        <button class="primary" type="submit">ব্যক্তিগত তথ্য সেভ করুন</button>
+        <div id="profileMessage" class="message" role="status"></div>
+        <p class="hint">ব্যক্তিগত তথ্য এই ব্রাউজারের স্টোরেজে রাখা হবে। গোপন বা অত্যন্ত সংবেদনশীল তথ্য এখানে না রাখাই ভালো।</p>
+      </form>
+    </section>
+  </div>
+
+  <!-- ৩. ফুয়েল এন্ট্রি -->
+  <div class="page" data-page="entry">
+    <section class="panel">
+      <h2>➕ নতুন ফুয়েল রেকর্ড</h2>
+      <form id="fuelForm">
+        <div class="grid" id="fuelFields"></div>
+        <button class="primary" type="submit">রেকর্ড সেভ করুন</button>
+        <div id="message" class="message" role="status"></div>
+      </form>
+      <p class="hint">মাইলেজ হিসাবের জন্য প্রথম রেকর্ডটি বেসলাইন হিসেবে থাকবে। পরের রেকর্ডগুলোর দূরত্ব = বর্তমান ওডোমিটার − আগের ওডোমিটার। সঠিক হিসাবের জন্য প্রতিবার কাছাকাছি একই ফুয়েল-ফিলিং পদ্ধতি ব্যবহার করুন।</p>
+    </section>
+  </div>
+
+  <!-- ৪. রেকর্ড -->
+  <div class="page" data-page="records">
+    <section class="panel">
+      <h2>📋 আগের রেকর্ড</h2>
+      <div id="records"><div class="empty">এখনও কোনো রেকর্ড নেই।</div></div>
+      <div class="actions">
+        <button class="secondary" id="exportBtn" type="button" data-action="csv">⬇ CSV ডাউনলোড</button>
+        <button class="secondary" id="backupBtn" type="button" data-action="json">JSON ব্যাকআপ</button>
+        <label class="file-label secondary" for="importFile">JSON ইমপোর্ট</label><input id="importFile" type="file" accept=".json,application/json" hidden>
+      </div>
+      <p class="hint">ডেটা এই ব্রাউজারের স্টোরেজে থাকে। ব্রাউজারের ডেটা মুছে ফেললে রেকর্ড হারাতে পারেন—মাঝেমধ্যে JSON ব্যাকআপ ডাউনলোড করে Google Drive-এ রাখুন।</p>
+    </section>
+  </div>
+
+  <!-- ৫. রিপোর্ট -->
+  <div class="page" data-page="reports">
+    <section class="panel">
+      <h2>📊 রিপোর্ট ডাউনলোড</h2>
+      <div class="sum-grid" id="reportSummary"></div>
+      <div class="actions">
+        <button class="secondary" type="button" data-action="pdf">📄 PDF ডাউনলোড</button>
+        <button class="secondary" type="button" data-action="xlsx">📗 Excel ডাউনলোড</button>
+        <button class="secondary" type="button" data-action="csv">⬇ CSV ডাউনলোড</button>
+        <button class="secondary" type="button" data-action="json">JSON ব্যাকআপ</button>
+      </div>
+      <div id="reportMessage" class="message" role="status"></div>
+      <hr class="divider">
+      <p class="sub-title">PDF রিপোর্টে থাকবে</p>
+      <ul class="plain">
+        <li>মালিক ও বাইকের বিবরণ</li>
+        <li>প্রতিটি ফুয়েল রেকর্ডের তারিখ ও ওডোমিটার রিডিং</li>
+        <li>জ্বালানির পরিমাণ ও প্রতি লিটারের দাম</li>
+        <li>মোট খরচ ও মাইলেজ এবং সর্বমোট হিসাব</li>
+      </ul>
+      <p class="sub-title" style="margin-top:14px">Excel রিপোর্টে থাকবে</p>
+      <ul class="plain">
+        <li>আলাদা কলামে সব রেকর্ড (আপনার যোগ করা কলামসহ)</li>
+        <li>প্রতিটি রিফিলের মোট খরচ, দূরত্ব ও মাইলেজ</li>
+        <li>মোট লিটার ও মোট ব্যয়ের সারসংক্ষেপ</li>
+      </ul>
+      <p class="hint">রিপোর্ট ইন্টারনেট ছাড়াই আপনার ডিভাইসে তৈরি হয়।</p>
+    </section>
+  </div>
+
+  <!-- ৬. সেটিংস -->
+  <div class="page" data-page="settings">
+    <section class="panel">
+      <h2>🧱 কলাম ব্যবস্থাপনা</h2>
+      <div id="colList"></div>
+      <div class="actions"><button class="secondary" type="button" id="addColBtn">➕ কলাম যোগ করুন</button></div>
+      <p class="hint">🔒 চিহ্নিত কলামগুলো মাইলেজ ও খরচের হিসাবের জন্য দরকারি, তাই এগুলোর শুধু নাম বদলানো যায়, মোছা যায় না। নতুন কলাম ফুয়েল এন্ট্রি, রেকর্ড, PDF, Excel ও CSV-তে যুক্ত হবে।</p>
+    </section>
+    <section class="panel">
+      <h2>🗂️ রো (সারি) ব্যবস্থাপনা</h2>
+      <div class="actions" style="margin-top:0;margin-bottom:6px"><button class="secondary" type="button" id="addRowBtn">➕ রো যোগ করুন</button></div>
+      <div id="rowList"></div>
+      <p class="hint">রো সম্পাদনা করলে মাইলেজ ও মোট হিসাব নিজে থেকেই নতুন করে হিসাব হবে। রো মুছতে হলে নিশ্চিতকরণ চাওয়া হবে।</p>
+    </section>
+  </div>
+
+</main>
+<footer class="wrap">Bike Fuel Log • আপনার ডেটা এই ডিভাইসের ব্রাউজারেই সংরক্ষিত থাকে</footer>
+
+<nav class="bottom-nav" aria-label="প্রধান মেনু"><div class="nav-in">
+  <a href="#home" data-nav="home"><span class="ni">🏠</span><span>হোম</span></a>
+  <a href="#profile" data-nav="profile"><span class="ni">👤</span><span>ব্যক্তিগত</span></a>
+  <a href="#entry" data-nav="entry"><span class="ni">➕</span><span>এন্ট্রি</span></a>
+  <a href="#records" data-nav="records"><span class="ni">📋</span><span>রেকর্ড</span></a>
+  <a href="#reports" data-nav="reports"><span class="ni">📊</span><span>রিপোর্ট</span></a>
+  <a href="#settings" data-nav="settings"><span class="ni">⚙️</span><span>সেটিংস</span></a>
+</div></nav>
+
+<div class="modal-back" id="modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h2 id="modalTitle"></h2>
+    <form id="modalForm">
+      <div id="modalBody"></div>
+      <div id="modalMsg" class="message" role="alert"></div>
+      <div class="modal-actions">
+        <button type="button" class="secondary" id="modalCancel">বাতিল</button>
+        <button type="submit" class="primary" id="modalSave">সেভ করুন</button>
+      </div>
+    </form>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+  "use strict";
+  /* ============ স্টোরেজ কী (আগের ডেটার সঙ্গে সামঞ্জস্য রাখতে অপরিবর্তিত) ============ */
+  const KEY = "bikeFuelLog_v1";
+  const PKEY = KEY + "_profile";
+  const CKEY = KEY + "_columns";
+  const $ = id => document.getElementById(id);
+  const h = (tag, props = {}, ...kids) => {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(props)) {
+      if (v == null || v === false) continue;
+      if (k === "class") e.className = v;
+      else if (k === "text") e.textContent = v;
+      else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v === true ? "" : v);
+    }
+    kids.flat().forEach(c => { if (c != null && c !== false) e.append(c.nodeType ? c : document.createTextNode(String(c))); });
+    return e;
+  };
+  const pad = n => String(n).padStart(2, "0");
+  const todayStr = () => { const t = new Date(); return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`; };
+  const money = n => "৳" + Number(n).toLocaleString("en-BD", {maximumFractionDigits: 2});
+  const num = n => Number(n).toLocaleString("en-BD", {maximumFractionDigits: 2});
+  const fin = v => v !== null && v !== undefined && v !== "" && Number.isFinite(Number(v));
+  function newId() { return crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random(); }
+
+  /* ============ কলাম (ফিল্ড) সংজ্ঞা ============ */
+  const TYPES = ["text", "number", "date"];
+  const TYPE_NAMES = {text: "টেক্সট", number: "সংখ্যা", date: "তারিখ"};
+  const DEFAULT_COLS = [
+    {id: "date",   label: "তারিখ",                    type: "date",   builtin: true, locked: true,  required: true},
+    {id: "odo",    label: "বর্তমান ওডোমিটার (কিমি)",  type: "number", builtin: true, locked: true,  required: true},
+    {id: "litres", label: "কত লিটার তেল",             type: "number", builtin: true, locked: true,  required: true},
+    {id: "price",  label: "প্রতি লিটারের দাম (৳)",    type: "number", builtin: true, locked: true,  required: true},
+    {id: "note",   label: "নোট (ঐচ্ছিক)",             type: "text",   builtin: true, locked: false, required: false}
+  ];
+  const SHORT = {date: "তারিখ", odo: "ওডোমিটার", litres: "লিটার", price: "দাম", note: "নোট"};
+  const HINTS = {
+    odo:    {placeholder: "যেমন 12500", min: "0", step: "0.1"},
+    litres: {placeholder: "যেমন 2.5", min: "0.01", step: "0.01"},
+    price:  {placeholder: "যেমন 130", min: "0", step: "0.01"},
+    note:   {placeholder: "যেমন: পাম্পের নাম বা মন্তব্য", maxlength: "120"}
+  };
+  const CORE_IDS = ["date", "odo", "litres", "price"];
+  const clean = c => c.label.replace(/\s*\(ঐচ্ছিক\)\s*$/, "").trim() || c.label;
+  const short = c => {
+    const d = DEFAULT_COLS.find(x => x.id === c.id);
+    return (c.builtin && d && c.label === d.label) ? SHORT[c.id] : clean(c);
+  };
+  const validForType = (v, t) => {
+    v = String(v).trim();
+    if (t === "number") return v !== "" && Number.isFinite(Number(v));
+    if (t === "date") return /^\d{4}-\d{2}-\d{2}$/.test(v);
+    return true;
+  };
+  function sanitizeCol(c) {
+    if (!c || typeof c !== "object" || typeof c.id !== "string" || !c.id) return null;
+    const d = DEFAULT_COLS.find(x => x.id === c.id);
+    const label = String(c.label || "").trim().slice(0, 60) || (d ? d.label : "");
+    if (!label) return null;
+    if (d) return {...d, label};
+    return {id: c.id, label, type: TYPES.includes(c.type) ? c.type : "text", builtin: false, locked: false, required: !!c.required};
+  }
+  function mergeSchema(list) {
+    const out = [], seen = new Set();
+    list.forEach(c => { const s = sanitizeCol(c); if (s && !seen.has(s.id)) { seen.add(s.id); out.push(s); } });
+    DEFAULT_COLS.forEach((d, i) => { if (d.locked && !seen.has(d.id)) out.splice(Math.min(i, out.length), 0, {...d}); });
+    return out;
+  }
+
+  /* ============ ডেটা লোড ============ */
+  let records = [];
+  let profile = {ownerName: "", phone: "", bikeName: "", bikeReg: "", engineCC: "", purchaseYear: "", profileNote: ""};
+  let schema = DEFAULT_COLS.map(c => ({...c}));
+  const cleanExtra = x => { const o = {}; if (x && typeof x === "object") Object.keys(x).forEach(k => { o[k] = x[k] == null ? "" : String(x[k]); }); return o; };
+  
+const validRec = r => {
+  if (!r || typeof r !== "object" || Array.isArray(r)) {
+    return false;
+  }
+
+  if (
+    typeof r.date !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(r.date)
+  ) {
+    return false;
+  }
+
+  const date = new Date(`${r.date}T00:00:00Z`);
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.toISOString().slice(0, 10) !== r.date
+  ) {
+    return false;
+  }
+
+  const odo = Number(r.odo);
+  const litres = Number(r.litres);
+  const price = Number(r.price);
+
+  return (
+    r.odo !== "" && r.litres !== "" && r.price !== "" &&
+    Number.isFinite(odo) && odo >= 0 &&
+    Number.isFinite(litres) && litres > 0 &&
+    Number.isFinite(price) && price >= 0
+  );
+};
+
+const normRec = r => ({id: String(r.id || newId()), date: r.date, odo: Number(r.odo), litres: Number(r.litres), price: Number(r.price), note: String(r.note || ""), extra: cleanExtra(r.extra)});
+  try {
+    const saved = localStorage.getItem(KEY);
+    const parsed = saved ? JSON.parse(saved) : [];
+    records = Array.isArray(parsed) ? parsed.filter(validRec).map(normRec) : [];
+  } catch (_) { records = []; }
+  try {
+    const savedProfile = localStorage.getItem(PKEY);
+    if (savedProfile) profile = {...profile, ...JSON.parse(savedProfile)};
+  } catch (_) {}
+  try {
+    const savedCols = localStorage.getItem(CKEY);
+    if (savedCols) { const s = JSON.parse(savedCols); if (Array.isArray(s)) schema = mergeSchema(s); }
+  } catch (_) {}
+
+  const getVal = (r, c) => c.builtin ? (r[c.id] ?? "") : ((r.extra && r.extra[c.id]) ?? "");
+
+  /* ============ বার্তা ও সেভ ============ */
+  let toastTimer;
+  function toast(text, err = false) {
+    const t = $("toast"); t.textContent = text; t.className = "toast show" + (err ? " err" : "");
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.className = "toast"; }, 3400);
+  }
+  function showMessage(text, error = false) {
+    const el = $("message"); el.textContent = text; el.className = "message show " + (error ? "err" : "ok");
+  }
+  function reportMsg(text, error = false) {
+    const el = $("reportMessage"); el.textContent = text; el.className = "message show " + (error ? "err" : "ok");
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(records)); return true; }
+    catch (_) {
+      const m = "ডেটা সেভ করা যায়নি। ব্রাউজারের স্টোরেজ খালি আছে কি না দেখুন।";
+      showMessage(m, true); toast(m, true); return false;
+    }
+  }
+  function saveSchema() {
+    try { localStorage.setItem(CKEY, JSON.stringify(schema)); return true; }
+    catch (_) { toast("কলামের সেটিংস সেভ করা যায়নি।", true); return false; }
+  }
+  function commit(next) {
+    const prev = records; records = next;
+    if (!save()) { records = prev; return false; }
+    renderAll(); return true;
+  }
+
+  /* ============ হিসাব ============ */
+  function sorted() { return [...records].sort((a, b) => a.odo - b.odo || a.date.localeCompare(b.date)); }
+  function analyze() {
+    const list = sorted(), map = new Map();
+    let distance = 0, mLitres = 0, mCost = 0;
+    for (let i = 1; i < list.length; i++) {
+      const r = list[i], d = r.odo - list[i - 1].odo;
+      if (d > 0 && r.litres > 0) {
+        map.set(r.id, {distance: d, mileage: d / r.litres});
+        distance += d; mLitres += r.litres; mCost += r.litres * r.price;
+      }
+    }
+    const totalCost = records.reduce((s, r) => s + r.litres * r.price, 0);
+    const totalLitres = records.reduce((s, r) => s + r.litres, 0);
+    return {list, map, totalCost, totalLitres, distance, mLitres, mCost,
+      avg: mLitres ? distance / mLitres : null,
+      costPerKm: distance ? mCost / distance : null};
+  }
+  const recent = () => [...records].sort((a, b) => b.date.localeCompare(a.date) || b.odo - a.odo);
+
+  /* ============ ব্যক্তিগত তথ্য ============ */
+  function fillProfile() {
+    ["ownerName", "phone", "bikeName", "bikeReg", "engineCC", "purchaseYear", "profileNote"].forEach(id => { $(id).value = profile[id] ?? ""; });
+  }
+  $("profileForm").addEventListener("submit", e => {
+    e.preventDefault();
+    profile = {
+      ownerName: $("ownerName").value.trim(),
+      phone: $("phone").value.trim(),
+      bikeName: $("bikeName").value.trim(),
+      bikeReg: $("bikeReg").value.trim(),
+      engineCC: $("engineCC").value.trim(),
+      purchaseYear: $("purchaseYear").value.trim(),
+      profileNote: $("profileNote").value.trim()
+    };
+    const el = $("profileMessage");
+    try {
+      localStorage.setItem(PKEY, JSON.stringify(profile));
+      el.textContent = "ব্যক্তিগত তথ্য সফলভাবে সেভ হয়েছে।";
+      el.className = "message show ok";
+      renderAll();
+    } catch (_) {
+      el.textContent = "তথ্য সেভ করা যায়নি। ব্রাউজারের স্টোরেজ যাচাই করুন।";
+      el.className = "message show err";
+    }
+  });
+
+  /* ============ ফর্ম ফিল্ড (এন্ট্রি ও রো-সম্পাদনায় একই) ============ */
+  function buildFields(container, prefix, rec) {
+    container.textContent = "";
+    schema.forEach(col => {
+      const id = prefix + "_" + col.id;
+      const hint = HINTS[col.id] || {};
+      const full = col.id === "note" || (!col.builtin && col.type === "text");
+      const lbl = col.builtin ? col.label : col.label + (col.required ? "" : " (ঐচ্ছিক)");
+      const attrs = {id, required: !!col.required};
+      if (col.type === "number") { attrs.type = "number"; attrs.step = hint.step || "any"; if (hint.min) attrs.min = hint.min; }
+      else if (col.type === "date") attrs.type = "date";
+      else { attrs.type = "text"; attrs.maxlength = hint.maxlength || "200"; }
+      if (hint.placeholder) attrs.placeholder = hint.placeholder;
+      const val = rec ? getVal(rec, col) : (col.id === "date" ? todayStr() : "");
+      attrs.value = String(val);
+      container.append(h("div", {class: "field" + (full ? " full" : "")}, h("label", {for: id, text: lbl}), h("input", attrs)));
+    });
+  }
+  function readFields(prefix) {
+    const raw = {};
+    schema.forEach(c => { const el = $(prefix + "_" + c.id); raw[c.id] = el ? el.value : ""; });
+    const odo = Number(raw.odo), litres = Number(raw.litres), price = Number(raw.price), date = raw.date;
+    if (!date || raw.odo === "" || raw.litres === "" || raw.price === "" ||
+        !Number.isFinite(odo) || odo < 0 || !Number.isFinite(litres) || litres <= 0 || !Number.isFinite(price) || price < 0) {
+      return {error: "সঠিক তারিখ, ওডোমিটার, লিটার ও দাম লিখুন।"};
+    }
+    const extra = {};
+    for (const c of schema) {
+      if (c.builtin) continue;
+      const v = String(raw[c.id] ?? "").trim();
+      if (c.required && v === "") return {error: `“${clean(c)}” লিখুন।`};
+      if (v !== "" && !validForType(v, c.type)) return {error: `“${clean(c)}” সঠিকভাবে লিখুন।`};
+      if (v !== "") extra[c.id] = v;
+    }
+    const hasNote = schema.some(c => c.id === "note");
+    return {record: {id: newId(), date, odo, litres, price, note: hasNote ? String(raw.note || "").trim() : "", extra}};
+  }
+  function buildEntryForm() { buildFields($("fuelFields"), "fuel", null); }
+
+  $("fuelForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const res = readFields("fuel");
+    if (res.error) { showMessage(res.error, true); return; }
+    const rec = res.record;
+    if (records.some(r => r.odo === rec.odo)) { showMessage("এই ওডোমিটার রিডিং আগে আছে। রিডিংটি যাচাই করুন।", true); return; }
+    if (records.length && rec.odo < Math.max(...records.map(r => r.odo))) {
+      if (!confirm("এই ওডোমিটার রিডিং আগের সর্বোচ্চ রিডিংয়ের চেয়ে কম। তবুও সেভ করবেন?")) return;
+    }
+    if (commit([...records, rec])) {
+      schema.forEach(c => { if (c.id !== "date" && c.id !== "price") { const el = $("fuel_" + c.id); if (el) el.value = ""; } });
+      showMessage("রেকর্ড সফলভাবে সেভ হয়েছে।");
+    }
+  });
+
+  /* ============ মোডাল ============ */
+  let modalSubmit = null;
+  function openModal({title, saveText, fill, submit}) {
+    $("modalTitle").textContent = title;
+    $("modalSave").textContent = saveText;
+    const body = $("modalBody"); body.textContent = ""; fill(body);
+    const msg = $("modalMsg"); msg.className = "message"; msg.textContent = "";
+    modalSubmit = submit; $("modal").hidden = false; document.body.classList.add("modal-open");
+    const first = body.querySelector("input,select");
+    if (first && window.matchMedia("(min-width:600px)").matches) first.focus();
+  }
+  function closeModal() { $("modal").hidden = true; document.body.classList.remove("modal-open"); modalSubmit = null; }
+  $("modalForm").addEventListener("submit", e => {
+    e.preventDefault();
+    if (!modalSubmit) return;
+    const err = modalSubmit();
+    if (err === null) closeModal();
+    else if (err) { const m = $("modalMsg"); m.textContent = err; m.className = "message show err"; }
+  });
+  $("modalCancel").addEventListener("click", closeModal);
+  $("modal").addEventListener("click", e => { if (e.target === $("modal")) closeModal(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("modal").hidden) closeModal(); });
+
+  /* ---- রো যোগ / সম্পাদনা ---- */
+  function openRowEditor(id) {
+    const rec = id ? records.find(r => r.id === id) : null;
+    if (id && !rec) return;
+    openModal({
+      title: rec ? "✏️ রো সম্পাদনা" : "➕ নতুন রো যোগ করুন",
+      saveText: rec ? "পরিবর্তন সেভ করুন" : "রো সেভ করুন",
+      fill: body => { const g = h("div", {class: "grid"}); body.append(g); buildFields(g, "modal", rec); },
+      submit: () => {
+        const res = readFields("modal");
+        if (res.error) return res.error;
+        const nr = res.record;
+        if (records.some(r => r.odo === nr.odo && (!rec || r.id !== rec.id))) return "এই ওডোমিটার রিডিং আগে আছে। রিডিংটি যাচাই করুন।";
+        if (!rec && records.length && nr.odo < Math.max(...records.map(r => r.odo))) {
+          if (!confirm("এই ওডোমিটার রিডিং আগের সর্বোচ্চ রিডিংয়ের চেয়ে কম। তবুও সেভ করবেন?")) return "";
+        }
+        let ok;
+        if (rec) { nr.id = rec.id; ok = commit(records.map(r => r.id === rec.id ? nr : r)); }
+        else ok = commit([...records, nr]);
+        if (!ok) return "ডেটা সেভ করা যায়নি।";
+        toast(rec ? "রো আপডেট হয়েছে।" : "নতুন রো যোগ হয়েছে।");
+        return null;
+      }
+    });
+  }
+  function deleteRow(id) {
+    const r = records.find(x => x.id === id); if (!r) return;
+    if (confirm(`${r.date} তারিখের (${num(r.odo)} কিমি) এই রেকর্ডটি মুছে ফেলবেন?`)) {
+      if (commit(records.filter(x => x.id !== id))) toast("রেকর্ড মুছে ফেলা হয়েছে।");
+    }
+  }
+
+  /* ---- কলাম যোগ / সম্পাদনা / মুছুন ---- */
+  function openColumnEditor(id) {
+    const col = id ? schema.find(c => c.id === id) : null;
+    if (id && !col) return;
+    const isCustom = !col || !col.builtin;
+    openModal({
+      title: col ? "✏️ কলাম সম্পাদনা" : "➕ নতুন কলাম যোগ করুন",
+      saveText: col ? "পরিবর্তন সেভ করুন" : "কলাম যোগ করুন",
+      fill: body => {
+        body.append(h("div", {class: "field"}, h("label", {for: "col_name", text: "কলামের নাম"}), h("input", {id: "col_name", type: "text", maxlength: "60", required: true, placeholder: "যেমন: পাম্পের নাম", value: col ? col.label : ""})));
+        if (isCustom) {
+          const sel = h("select", {id: "col_type"}, TYPES.map(t => h("option", {value: t, selected: col ? col.type === t : t === "text", text: TYPE_NAMES[t]})));
+          body.append(h("div", {class: "field", style: "margin-top:12px"}, h("label", {for: "col_type", text: "তথ্যের ধরন"}), sel));
+          body.append(h("label", {class: "check", style: "margin-top:12px"}, h("input", {id: "col_req", type: "checkbox", checked: col ? col.required : false}), "এই তথ্য দেওয়া আবশ্যিক"));
+        } else {
+          body.append(h("p", {class: "hint", text: col.locked ? "🔒 এটি মাইলেজ ও খরচের হিসাবের মূল কলাম, তাই শুধু নাম বদলানো যায়।" : "এই কলামের শুধু নাম বদলানো যায়।"}));
+        }
+      },
+      submit: () => {
+        const label = $("col_name").value.trim();
+        if (!label) return "কলামের নাম লিখুন।";
+        const dup = schema.some(c => c.id !== (col && col.id) && clean(c).toLowerCase() === label.replace(/\s*\(ঐচ্ছিক\)\s*$/, "").trim().toLowerCase());
+        if (dup) return "এই নামে আরেকটি কলাম আছে।";
+        if (isCustom) {
+          const type = $("col_type").value, required = $("col_req").checked;
+          if (col) {
+            if (type !== col.type) {
+              const bad = records.some(r => { const v = String(getVal(r, col)); return v !== "" && !validForType(v, type); });
+              if (bad) return "এই কলামে আগে থেকে এমন তথ্য আছে যা নতুন ধরনের সঙ্গে মেলে না। ধরন বদলাতে চাইলে আগে ঐ রো সম্পাদনা করুন।";
+            }
+            col.label = label; col.type = type; col.required = required;
+          } else {
+            if (schema.filter(c => !c.builtin).length >= 15) return "সর্বোচ্চ ১৫টি নতুন কলাম যোগ করা যাবে।";
+            schema.push({id: "c_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), label, type, builtin: false, locked: false, required});
+          }
+        } else {
+          col.label = label;
+        }
+        if (!saveSchema()) {
+          toast("কলামের সেটিংস সেভ করা যায়নি।", true);
+          return "কলামের সেটিংস সেভ করা যায়নি।";
+        }
+
+        buildEntryForm();
+        renderAll();
+
+        toast(col ? "কলাম আপডেট হয়েছে।" : "নতুন কলাম যোগ হয়েছে।");
+        return null;
+      }
+    });
+  }
+  
+  function deleteColumn(id) {
+    const col = schema.find(c => c.id === id);
+    if (!col || col.locked) return;
+    const used = records.filter(r => String(getVal(r, col)) !== "").length;
+    const msg = `“${clean(col)}” কলামটি মুছে ফেলবেন?` + (used ? `\n\nএই কলামে ${used}টি রেকর্ডের তথ্য আছে, সেগুলোও মুছে যাবে।` : "");
+    if (!confirm(msg)) return;
+    const next = records.map(r => {
+      const n = {...r, extra: {...(r.extra || {})}};
+      if (col.builtin) n[col.id] = ""; else delete n.extra[col.id];
+      return n;
+    });
+    const prevSchema = schema;
+    schema = schema.filter(c => c.id !== id);
+    if (!commit(next)) { schema = prevSchema; return; }
+    saveSchema(); buildEntryForm(); renderAll();
+    toast("কলাম মুছে ফেলা হয়েছে।");
+  }
+
+  /* ============ রেন্ডার ============ */
+  function renderHome(a) {
+    $("avgMileage").textContent = a.avg != null ? num(a.avg) : "—";
+    $("totalCost").textContent = money(a.totalCost);
+    $("totalLitres").textContent = num(a.totalLitres);
+    $("costPerKm").textContent = a.costPerKm != null ? money(a.costPerKm) : "—";
+
+    const bike = $("homeBike"); bike.textContent = "";
+    const p = profile;
+    if (!p.ownerName && !p.bikeName) {
+      bike.append(h("div", {class: "empty", text: "এখনও ব্যক্তিগত তথ্য দেওয়া হয়নি।"}),
+        h("div", {class: "actions", style: "margin-top:0;justify-content:center"}, h("button", {class: "secondary", type: "button", "data-go": "profile", text: "👤 ব্যক্তিগত তথ্য দিন"})));
+    } else {
+      const meta = [p.ownerName ? "মালিক: " + p.ownerName : "", p.engineCC ? p.engineCC + " CC" : "", p.purchaseYear ? p.purchaseYear + " সাল" : "", p.bikeReg ? "রেজি: " + p.bikeReg : ""].filter(Boolean).join(" • ");
+      bike.append(h("div", {class: "record-main", text: p.bikeName || "বাইকের নাম দেওয়া হয়নি"}), h("div", {class: "record-meta", text: meta}));
+    }
+
+    const last = $("lastRefill"); last.textContent = "";
+    const r = recent()[0];
+    if (!r) { last.append(h("div", {class: "empty", text: "এখনও কোনো রেকর্ড নেই।"})); return; }
+    const m = a.map.get(r.id);
+    last.append(h("div", {class: "record-top"},
+      h("div", {}, h("div", {class: "record-date", text: r.date}), h("div", {class: "record-main", text: `${num(r.litres)} লিটার • ${money(r.price)}/লিটার`})),
+      h("div", {class: "record-cost", text: money(r.litres * r.price)})),
+      h("div", {class: "record-meta", text: `ওডোমিটার: ${num(r.odo)} কিমি` + (m ? ` • মাইলেজ: ${num(m.mileage)} কিমি/লিটার` : "")}));
+  }
+
+  function extrasText(r) {
+    return schema.filter(c => !CORE_IDS.includes(c.id)).map(c => [short(c), getVal(r, c)]).filter(([, v]) => String(v) !== "").map(([k, v]) => ` • ${k}: ${v}`).join("");
+  }
+
+  function renderRecords(a) {
+    const container = $("records");
+    if (!records.length) { container.innerHTML = '<div class="empty">এখনও কোনো রেকর্ড নেই।</div>'; return; }
+    container.textContent = "";
+    recent().forEach(r => {
+      const m = a.map.get(r.id);
+      const meta = `ওডোমিটার: ${num(r.odo)} কিমি` + (m ? ` • দূরত্ব: ${num(m.distance)} কিমি • মাইলেজ: ${num(m.mileage)} কিমি/লিটার` : " • বেসলাইন/মাইলেজ হিসাবের জন্য আগের রেকর্ড নেই") + extrasText(r);
+      container.append(h("div", {class: "record"},
+        h("div", {class: "record-top"},
+          h("div", {}, h("div", {class: "record-date", text: r.date}), h("div", {class: "record-main", text: `${num(r.litres)} লিটার • ${money(r.price)}/লিটার`})),
+          h("div", {class: "record-cost", text: money(r.litres * r.price)})),
+        h("div", {class: "record-meta", text: meta}),
+        h("div", {class: "record-actions"},
+          h("button", {type: "button", class: "secondary mini", text: "✏️ সম্পাদনা", onclick: () => openRowEditor(r.id)}),
+          h("button", {type: "button", class: "danger", text: "রেকর্ড মুছুন", onclick: () => deleteRow(r.id)}))));
+    });
+  }
+
+  function renderReports(a) {
+    const box = $("reportSummary"); box.textContent = "";
+    [["মোট রেকর্ড", records.length + " টি"], ["মোট কেনা তেল", num(a.totalLitres) + " লিটার"], ["মোট জ্বালানি খরচ", money(a.totalCost)], ["গড় মাইলেজ", a.avg != null ? num(a.avg) + " কিমি/লিটার" : "—"]]
+      .forEach(([k, v]) => box.append(h("div", {}, h("span", {text: k}), h("b", {text: v}))));
+  }
+
+  function renderSettings(a) {
+    const cl = $("colList"); cl.textContent = "";
+    schema.forEach(c => {
+      cl.append(h("div", {class: "item"},
+        h("div", {class: "item-main"},
+          h("div", {class: "item-title", text: c.label}),
+          h("div", {class: "badges"},
+            h("span", {class: "badge", text: TYPE_NAMES[c.type]}),
+            c.required && !c.locked ? h("span", {class: "badge", text: "আবশ্যিক"}) : null,
+            c.locked ? h("span", {class: "badge lock", text: "🔒 সুরক্ষিত"}) : null)),
+        h("div", {class: "item-btns"},
+          h("button", {type: "button", class: "secondary mini", text: "✏️ সম্পাদনা", onclick: () => openColumnEditor(c.id)}),
+          c.locked ? null : h("button", {type: "button", class: "danger mini", text: "🗑️ মুছুন", onclick: () => deleteColumn(c.id)}))));
+    });
+    const rl = $("rowList"); rl.textContent = "";
+    if (!records.length) { rl.append(h("div", {class: "empty", text: "এখনও কোনো রো নেই।"})); return; }
+    recent().forEach(r => {
+      rl.append(h("div", {class: "item"},
+        h("div", {class: "item-main"},
+          h("div", {class: "item-title", text: `${r.date} • ${num(r.litres)} লিটার`}),
+          h("div", {class: "item-sub", text: `ওডোমিটার: ${num(r.odo)} কিমি • ${money(r.litres * r.price)}`})),
+        h("div", {class: "item-btns"},
+          h("button", {type: "button", class: "secondary mini", text: "✏️", "aria-label": "রো সম্পাদনা", onclick: () => openRowEditor(r.id)}),
+          h("button", {type: "button", class: "danger mini", text: "🗑️", "aria-label": "রো মুছুন", onclick: () => deleteRow(r.id)}))));
+    });
+  }
+
+  function renderAll() {
+    const a = analyze();
+    renderHome(a); renderRecords(a); renderReports(a); renderSettings(a);
+  }
+
+  /* ============ নেভিগেশন ============ */
+  const PAGES = ["home", "profile", "entry", "records", "reports", "settings"];
+  function route() {
+    let p = (location.hash || "").replace("#", "");
+    if (!PAGES.includes(p)) p = "home";
+    document.querySelectorAll(".page").forEach(s => s.classList.toggle("active", s.dataset.page === p));
+    document.querySelectorAll(".bottom-nav a").forEach(a => {
+      const on = a.dataset.nav === p;
+      a.classList.toggle("active", on);
+      if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+    });
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener("hashchange", route);
+
+  /* ============ ডাউনলোড / ব্যাকআপ ============ */
+  function download(name, content, type) {
+    const blob = content instanceof Blob ? content : new Blob([content], {type});
+    const url = URL.createObjectURL(blob); const a = document.createElement("a");
+    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }
+  function exportCsv() {
+    const a = analyze(), customs = schema.filter(c => !c.builtin);
+    const rows = [["Date", "Odometer_km", "Litres", "Price_per_litre_BDT", "Total_cost_BDT", "Note", "Mileage_km_per_litre", "Distance_km", ...customs.map(clean)]];
+    a.list.forEach(r => {
+      const m = a.map.get(r.id);
+      rows.push([r.date, r.odo, r.litres, r.price, (r.litres * r.price).toFixed(2), r.note || "", m ? m.mileage.toFixed(2) : "", m ? +m.distance.toFixed(2) : "", ...customs.map(c => getVal(r, c))]);
+    });
+    const csv = "\uFEFF" + rows.map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\r\n");
+    download("bike-fuel-log.csv", csv, "text/csv;charset=utf-8");
+  }
+  function exportJson() {
+    download("bike-fuel-backup.json", JSON.stringify({version: 2, exportedAt: new Date().toISOString(), profile, columns: schema, records}, null, 2), "application/json");
+  }
+  $("importFile").addEventListener("change", async e => {
+    const file = e.target.files && e.target.files[0]; if (!file) return;
+    try {
+      const data = JSON.parse(await file.text());
+      const incoming = Array.isArray(data) ? data : data.records;
+      if (!Array.isArray(incoming) || incoming.some(r => !validRec(r))) throw new Error("invalid");
+      if (!confirm("ইমপোর্ট করলে বর্তমান রেকর্ডের সঙ্গে নতুন রেকর্ড যোগ হবে (একই রেকর্ড দ্বিতীয়বার যোগ হবে না)। ব্যাকআপে ব্যক্তিগত তথ্য থাকলে সেটিও আপডেট হবে। চালিয়ে যাবেন?")) return;
+      if (data && !Array.isArray(data) && data.profile && typeof data.profile === "object") {
+        profile = {...profile, ...data.profile};
+        try { localStorage.setItem(PKEY, JSON.stringify(profile)); fillProfile(); } catch (_) {}
+      }
+      let schemaChanged = false;
+      if (data && !Array.isArray(data) && Array.isArray(data.columns)) {
+        data.columns.forEach(c => { const s = sanitizeCol(c); if (s && !schema.some(x => x.id === s.id)) { schema.push(s); schemaChanged = true; } });
+      }
+      if (!schema.some(c => c.id === "note") && incoming.some(r => r.note)) { schema.push({...DEFAULT_COLS[4]}); schemaChanged = true; }
+      const customIds = new Set(schema.filter(c => !c.builtin).map(c => c.id));
+      const keyOf = r => [r.date, r.odo, r.litres, r.price].join("|");
+      const have = new Set(records.map(keyOf)), ids = new Set(records.map(r => r.id));
+      const next = [...records]; let added = 0, skipped = 0;
+      incoming.forEach(raw => {
+        const rec = normRec(raw);
+        const ex = {}; Object.keys(rec.extra).forEach(k => { if (customIds.has(k)) ex[k] = rec.extra[k]; }); rec.extra = ex;
+        if (have.has(keyOf(rec))) { skipped++; return; }
+        if (ids.has(rec.id)) rec.id = newId();
+        ids.add(rec.id); have.add(keyOf(rec)); next.push(rec); added++;
+      });
+      if (schemaChanged) { saveSchema(); buildEntryForm(); }
+      if (commit(next)) toast(`ব্যাকআপ ইমপোর্ট হয়েছে। নতুন ${added}টি` + (skipped ? `, আগে থেকে থাকা ${skipped}টি বাদ।` : "।"));
+    } catch (_) { toast("ফাইলটি সঠিক JSON ব্যাকআপ নয়।", true); }
+    finally { e.target.value = ""; }
+  });
+
+  /* ============ Excel (.xlsx) — বাইরের লাইব্রেরি ছাড়া, অফলাইনে ============ */
+  const CRC_TABLE = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  function crc32(b) { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC_TABLE[(c ^ b[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+  function zipStore(files, mime) {
+    const enc = new TextEncoder(), chunks = [], central = []; let offset = 0;
+    files.forEach(f => {
+      const name = enc.encode(f.name), data = enc.encode(f.text), crc = crc32(data), size = data.length;
+      const lh = new Uint8Array(30 + name.length), dv = new DataView(lh.buffer);
+      dv.setUint32(0, 0x04034b50, true); dv.setUint16(4, 20, true); dv.setUint16(6, 0x0800, true); dv.setUint16(8, 0, true);
+      dv.setUint16(10, 0, true); dv.setUint16(12, 0x21, true); dv.setUint32(14, crc, true); dv.setUint32(18, size, true);
+      dv.setUint32(22, size, true); dv.setUint16(26, name.length, true); dv.setUint16(28, 0, true); lh.set(name, 30);
+      chunks.push(lh, data);
+      const ch = new Uint8Array(46 + name.length), cv = new DataView(ch.buffer);
+      cv.setUint32(0, 0x02014b50, true); cv.setUint16(4, 20, true); cv.setUint16(6, 20, true); cv.setUint16(8, 0x0800, true);
+      cv.setUint16(10, 0, true); cv.setUint16(12, 0, true); cv.setUint16(14, 0x21, true); cv.setUint32(16, crc, true);
+      cv.setUint32(20, size, true); cv.setUint32(24, size, true); cv.setUint16(28, name.length, true);
+      cv.setUint32(42, offset, true); ch.set(name, 46); central.push(ch);
+      offset += lh.length + size;
+    });
+    const cdSize = central.reduce((s, c) => s + c.length, 0), end = new Uint8Array(22), ev = new DataView(end.buffer);
+    ev.setUint32(0, 0x06054b50, true); ev.setUint16(8, files.length, true); ev.setUint16(10, files.length, true);
+    ev.setUint32(12, cdSize, true); ev.setUint32(16, offset, true);
+    return new Blob([...chunks, ...central, end], {type: mime});
+  }
+  const colL = i => { let s = ""; i++; while (i > 0) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };
+  const xesc = s => String(s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  function sheetBuilder() {
+    const rows = [];
+    const put = (ri, ci, xml) => { (rows[ri] = rows[ri] || []).push([ci, xml]); };
+    const ref = (ri, ci) => colL(ci) + (ri + 1);
+    const st = s => s ? ` s="${s}"` : "";
+    return {
+      str: (ri, ci, v, s = 0) => put(ri, ci, `<c r="${ref(ri, ci)}"${st(s)} t="inlineStr"><is><t xml:space="preserve">${xesc(v)}</t></is></c>`),
+      num: (ri, ci, v, s = 0) => put(ri, ci, `<c r="${ref(ri, ci)}"${st(s)}><v>${v}</v></c>`),
+      fml: (ri, ci, f, v, s = 0) => put(ri, ci, `<c r="${ref(ri, ci)}"${st(s)}><f>${xesc(f)}</f><v>${v}</v></c>`),
+      xml: (widths, freeze) => {
+        let body = "";
+        rows.forEach((cells, ri) => { cells.sort((a, b) => a[0] - b[0]); body += `<row r="${ri + 1}">${cells.map(c => c[1]).join("")}</row>`; });
+        return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0">${freeze ? '<pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft"/>' : ""}</sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/><cols>${widths.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join("")}</cols><sheetData>${body}</sheetData></worksheet>`;
+      }
+    };
+  }
+  function buildXlsx() {
+    const a = analyze();
+    const rec = sheetBuilder();
+    const X = [];
+    schema.forEach(c => {
+      X.push({h: clean(c), tag: c.id, numeric: c.type === "number", fmt: c.id === "price" ? 2 : 0, w: Math.min(40, Math.max(13, clean(c).length * 1.7)), get: r => getVal(r, c)});
+      if (c.id === "price") {
+        X.push({h: "মোট খরচ (৳)", tag: "cost", numeric: true, fmt: 2, w: 16, get: r => +(r.litres * r.price).toFixed(2)});
+        X.push({h: "দূরত্ব (কিমি)", tag: "dist", numeric: true, fmt: 0, w: 15, get: (r, m) => m ? +m.distance.toFixed(2) : ""});
+        X.push({h: "মাইলেজ (কিমি/লিটার)", tag: "mil", numeric: true, fmt: 2, w: 20, get: (r, m) => m ? +m.mileage.toFixed(2) : ""});
+      }
+    });
+    X.forEach((c, ci) => rec.str(0, ci, c.h, 1));
+    a.list.forEach((r, i) => {
+      const m = a.map.get(r.id);
+      X.forEach((c, ci) => {
+        const v = c.get(r, m);
+        if (v === "" || v == null) return;
+        if (c.numeric && Number.isFinite(Number(v))) rec.num(i + 1, ci, Number(v), c.fmt === 2 ? 2 : 0);
+        else rec.str(i + 1, ci, v);
+      });
+    });
+    const n = a.list.length, tr = n + 1;
+    rec.str(tr, 0, "মোট", 3);
+    const cachedSum = {litres: a.totalLitres, cost: +a.totalCost.toFixed(2), dist: +a.distance.toFixed(2)};
+    X.forEach((c, ci) => { if (cachedSum[c.tag] !== undefined) rec.fml(tr, ci, `SUM(${colL(ci)}2:${colL(ci)}${n + 1})`, cachedSum[c.tag], 4); });
+
+    const sum = sheetBuilder(); let ri = 0;
+    const kv = (k, v, numeric) => { sum.str(ri, 0, k); if (v === "" || v == null) sum.str(ri, 1, "—"); else if (numeric) sum.num(ri, 1, v, 2); else sum.str(ri, 1, v); ri++; };
+    sum.str(ri++, 0, "বাইক ফুয়েল লগ — সারসংক্ষেপ", 3);
+    kv("রিপোর্ট তৈরি", `${todayStr()} ${pad(new Date().getHours())}:${pad(new Date().getMinutes())}`); ri++;
+    sum.str(ri++, 0, "মালিক ও বাইকের বিবরণ", 3);
+    kv("মালিকের নাম", profile.ownerName); kv("মোবাইল নম্বর", profile.phone); kv("বাইকের নাম / মডেল", profile.bikeName);
+    kv("রেজিস্ট্রেশন নম্বর", profile.bikeReg); kv("ইঞ্জিন ক্ষমতা (CC)", profile.engineCC); kv("কেনার বছর", profile.purchaseYear); kv("অতিরিক্ত তথ্য", profile.profileNote); ri++;
+    sum.str(ri++, 0, "সর্বমোট হিসাব", 3);
+    kv("মোট রেকর্ড", records.length, true); kv("মোট কেনা তেল (লিটার)", +a.totalLitres.toFixed(2), true);
+    kv("মোট জ্বালানি খরচ (৳)", +a.totalCost.toFixed(2), true); kv("মাপা মোট দূরত্ব (কিমি)", +a.distance.toFixed(2), true);
+    kv("গড় মাইলেজ (কিমি/লিটার)", a.avg != null ? +a.avg.toFixed(2) : "", true); kv("প্রতি কিমিতে খরচ (৳/কিমি)", a.costPerKm != null ? +a.costPerKm.toFixed(2) : "", true);
+
+    const styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF123B2B"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="5"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf><xf numFmtId="2" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="2" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyNumberFormat="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+    const files = [
+      {name: "[Content_Types].xml", text: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'},
+      {name: "_rels/.rels", text: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
+      {name: "xl/workbook.xml", text: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="রেকর্ড" sheetId="1" r:id="rId1"/><sheet name="সারসংক্ষেপ" sheetId="2" r:id="rId2"/></sheets><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>'},
+      {name: "xl/_rels/workbook.xml.rels", text: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'},
+      {name: "xl/styles.xml", text: styles},
+      {name: "xl/worksheets/sheet1.xml", text: rec.xml(X.map(c => c.w), true)},
+      {name: "xl/worksheets/sheet2.xml", text: sum.xml([34, 34], false)}
+    ];
+    return zipStore(files, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  }
+
+  /* ============ PDF — ক্যানভাসে আঁকা পেজ থেকে, বাইরের লাইব্রেরি ছাড়া ============ */
+  const PW = 595.28, PH = 841.89;
+  function assemblePdf(imgs) {
+    const enc = new TextEncoder(), chunks = [], offs = []; let len = 0;
+    const put = b => { if (typeof b === "string") b = enc.encode(b); chunks.push(b); len += b.length; };
+    const obj = (id, parts) => { offs[id] = len; put(`${id} 0 obj\n`); parts.forEach(put); put("\nendobj\n"); };
+    const n = imgs.length, total = 2 + 3 * n;
+    put(new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2D, 0x31, 0x2E, 0x34, 0x0A, 0x25, 0xE2, 0xE3, 0xCF, 0xD3, 0x0A]));
+    obj(1, ["<< /Type /Catalog /Pages 2 0 R >>"]);
+    obj(2, [`<< /Type /Pages /Kids [${imgs.map((_, i) => `${3 + 3 * i} 0 R`).join(" ")}] /Count ${n} >>`]);
+    imgs.forEach((im, i) => {
+      const pid = 3 + 3 * i, cid = 4 + 3 * i, iid = 5 + 3 * i, content = `q ${PW} 0 0 ${PH} 0 0 cm /Im0 Do Q`;
+      obj(pid, [`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PW} ${PH}] /Resources << /XObject << /Im0 ${iid} 0 R >> >> /Contents ${cid} 0 R >>`]);
+      obj(cid, [`<< /Length ${content.length} >>\nstream\n`, content, "\nendstream"]);
+      obj(iid, [`<< /Type /XObject /Subtype /Image /Width ${im.w} /Height ${im.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${im.bytes.length} >>\nstream\n`, im.bytes, "\nendstream"]);
+    });
+    const xref = len;
+    put(`xref\n0 ${total + 1}\n0000000000 65535 f \n`);
+    for (let i = 1; i <= total; i++) put(String(offs[i]).padStart(10, "0") + " 00000 n \n");
+    put(`trailer\n<< /Size ${total + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
+    return new Blob(chunks, {type: "application/pdf"});
+  }
+
+  async function buildPdf() {
+    const a = analyze();
+    const M = 32, S = 2.2, CW = PW - 2 * M, LIMIT = PH - M - 8;
+    const FONT = '"Noto Sans Bengali","Hind Siliguri","Nirmala UI","Vrinda",system-ui,sans-serif';
+    const font = (sz, w) => `${w || 400} ${sz}px ${FONT}`;
+    const GREEN = "#123b2b", MUTED = "#68756d", LINE = "#e0e8e1", INK = "#17231d";
+    const pages = []; let cur = null, y = 0;
+    try { await document.fonts.load(font(12, 700), "বাংলা"); } catch (_) {}
+    const newPage = () => {
+      const c = document.createElement("canvas"); c.width = Math.round(PW * S); c.height = Math.round(PH * S);
+      const x = c.getContext("2d"); x.scale(S, S); x.fillStyle = "#fff"; x.fillRect(0, 0, PW, PH); x.textBaseline = "top";
+      cur = {c, x}; pages.push(cur); y = M;
+    };
+    const txt = (t, x0, y0, o = {}) => { const c = cur.x; c.font = font(o.size || 10, o.weight); c.fillStyle = o.color || INK; c.textAlign = o.align || "left"; c.fillText(String(t), x0, y0); };
+    const width = (t, size, weight) => { cur.x.font = font(size, weight); return cur.x.measureText(String(t)).width; };
+    const seg = s => (window.Intl && Intl.Segmenter) ? Array.from(new Intl.Segmenter(undefined, {granularity: "grapheme"}).segment(s), z => z.segment) : Array.from(s);
+    const clip = (t, maxW, size, weight) => {
+      t = String(t); if (width(t, size, weight) <= maxW) return t;
+      const g = seg(t); while (g.length && width(g.join("") + "…", size, weight) > maxW) g.pop(); return g.join("") + "…";
+    };
+    const wrap = (t, maxW, size, weight, maxLines) => {
+      const words = String(t).split(/\s+/).filter(Boolean), lines = []; let line = "";
+      for (const w0 of words) {
+        const w = width(w0, size, weight) > maxW ? clip(w0, maxW, size, weight) : w0, test = line ? line + " " + w : w;
+        if (!line || width(test, size, weight) <= maxW) line = test; else { lines.push(line); line = w; }
+      }
+      if (line) lines.push(line);
+      if (maxLines && lines.length > maxLines) { const keep = lines.slice(0, maxLines); keep[maxLines - 1] = clip(keep[maxLines - 1] + "…", maxW, size, weight); return keep; }
+      return lines.length ? lines : [""];
+    };
+    const box = (x0, y0, w, hh, fill, stroke, r = 8) => {
+      const c = cur.x; c.beginPath(); if (c.roundRect) c.roundRect(x0, y0, w, hh, r); else c.rect(x0, y0, w, hh);
+      if (fill) { c.fillStyle = fill; c.fill(); } if (stroke) { c.strokeStyle = stroke; c.lineWidth = 0.8; c.stroke(); }
+    };
+    const sectionTitle = t => { cur.x.fillStyle = "#c9f36a"; cur.x.fillRect(M, y + 1, 3, 14); txt(t, M + 9, y, {size: 12.5, weight: 700, color: GREEN}); y += 24; };
+
+    // --- পেজ ১: শিরোনাম ---
+    newPage();
+    cur.x.fillStyle = GREEN; cur.x.fillRect(0, 0, PW, 84); cur.x.fillStyle = "#c9f36a"; cur.x.fillRect(0, 84, PW, 3);
+    txt("YOUR PERSONAL BIKE TRACKER", M, 14, {size: 8, weight: 700, color: "#c9f36a"});
+    txt("বাইক ফুয়েল লগ — রিপোর্ট", M, 28, {size: 22, weight: 700, color: "#fff"});
+    const now = new Date();
+    txt(`রিপোর্ট তৈরি: ${todayStr()} ${pad(now.getHours())}:${pad(now.getMinutes())}`, M, 62, {size: 9, color: "#d7e5da"});
+    y = 106;
+
+    // --- মালিক ও বাইকের বিবরণ ---
+    sectionTitle("মালিক ও বাইকের বিবরণ");
+    const P = profile, half = (CW - 24) / 2;
+    const items = [["মালিকের নাম", P.ownerName], ["মোবাইল নম্বর", P.phone], ["বাইকের নাম / মডেল", P.bikeName], ["রেজিস্ট্রেশন নম্বর", P.bikeReg], ["ইঞ্জিন ক্ষমতা (CC)", P.engineCC ? P.engineCC + " CC" : ""], ["কেনার বছর", P.purchaseYear]];
+    const noteLines = P.profileNote ? wrap(P.profileNote, CW - 24, 9.5, 400, 4) : null;
+    const boxH = 12 + 3 * 36 + (noteLines ? 18 + noteLines.length * 14 + 4 : 0);
+    box(M, y, CW, boxH, "#fbfdfb", LINE);
+    items.forEach(([k, v], i) => {
+      const x0 = M + 12 + (i % 2) * half, y0 = y + 10 + Math.floor(i / 2) * 36;
+      txt(k, x0, y0, {size: 8.5, color: MUTED}); txt(clip(v || "—", half - 12, 10.5, 700), x0, y0 + 13, {size: 10.5, weight: 700});
+    });
+    if (noteLines) {
+      const y0 = y + 10 + 3 * 36; txt("অতিরিক্ত তথ্য", M + 12, y0, {size: 8.5, color: MUTED});
+      noteLines.forEach((l, i) => txt(l, M + 12, y0 + 14 + i * 14, {size: 9.5}));
+    }
+    y += boxH + 20;
+
+    // --- ফুয়েল রেকর্ডের টেবিল ---
+    if (y + 90 > LIMIT) newPage();
+    sectionTitle(`ফুয়েল রেকর্ড (${a.list.length}টি)`);
+    const lab = id => { const c = schema.find(z => z.id === id); return c ? clean(c) : id; };
+    const tcols = [
+      {t: "ক্রম", w: 4, v: (r, i) => String(i + 1)},
+      {t: lab("date"), w: 10, v: r => r.date},
+      {t: lab("odo"), w: 11, v: r => num(r.odo)},
+      {t: lab("litres"), w: 8, v: r => num(r.litres)},
+      {t: lab("price"), w: 10, v: r => num(r.price)},
+      {t: "মোট খরচ (৳)", w: 12, v: r => num(+(r.litres * r.price).toFixed(2))},
+      {t: "দূরত্ব (কিমি)", w: 10, v: (r, i, m) => m ? num(m.distance) : "—"},
+      {t: "মাইলেজ (কিমি/লিটার)", w: 11, v: (r, i, m) => m ? num(m.mileage) : "—"}
+    ];
+    const wsum = tcols.reduce((s, c) => s + c.w, 0); let px = M;
+    tcols.forEach(c => { c.pw = c.w / wsum * CW; c.x = px; px += c.pw; });
+    const tableHeader = () => {
+      const lines = tcols.map(c => wrap(c.t, c.pw - 8, 8.5, 700, 3)), hh = Math.max(...lines.map(l => l.length)) * 11 + 10;
+      cur.x.fillStyle = GREEN; cur.x.fillRect(M, y, CW, hh);
+      tcols.forEach((c, i) => lines[i].forEach((l, j) => txt(l, c.x + c.pw / 2, y + 5 + j * 11, {size: 8.5, weight: 700, color: "#fff", align: "center"})));
+      y += hh;
+    };
+    tableHeader();
+    a.list.forEach((r, i) => {
+      const m = a.map.get(r.id);
+      const ex = schema.filter(c => !CORE_IDS.includes(c.id)).map(c => [short(c), getVal(r, c)]).filter(([, v]) => String(v) !== "").map(([k, v]) => `${k}: ${v}`).join("  •  ");
+      const exLines = ex ? wrap(ex, CW - 16, 8.5, 400, 2) : [];
+      const rh = 22 + (exLines.length ? exLines.length * 11 + 3 : 0);
+      if (y + rh > LIMIT) { newPage(); tableHeader(); }
+      if (i % 2 === 1) { cur.x.fillStyle = "#f4f7f3"; cur.x.fillRect(M, y, CW, rh); }
+      tcols.forEach(c => txt(clip(c.v(r, i, m), c.pw - 6, 9, 400), c.x + c.pw / 2, y + 6, {size: 9, align: "center"}));
+      exLines.forEach((l, j) => txt(l, M + 8, y + 21 + j * 11, {size: 8.5, color: MUTED}));
+      cur.x.strokeStyle = LINE; cur.x.lineWidth = 0.6; cur.x.beginPath(); cur.x.moveTo(M, y + rh); cur.x.lineTo(M + CW, y + rh); cur.x.stroke();
+      y += rh;
+    });
+    y += 22;
+
+    // --- সর্বমোট হিসাব ---
+    if (y + 150 > LIMIT) newPage();
+    sectionTitle("সর্বমোট হিসাব");
+    const cw = (CW - 16) / 3;
+    [["মোট রেকর্ড", `${records.length} টি`], ["মোট কেনা তেল", `${num(a.totalLitres)} লিটার`], ["মোট জ্বালানি খরচ", money(a.totalCost)],
+     ["মাপা মোট দূরত্ব", `${num(a.distance)} কিমি`], ["গড় মাইলেজ", a.avg != null ? `${num(a.avg)} কিমি/লিটার` : "—"], ["প্রতি কিমিতে খরচ", a.costPerKm != null ? `${money(a.costPerKm)} / কিমি` : "—"]]
+      .forEach(([k, v], i) => {
+        const x0 = M + (i % 3) * (cw + 8), y0 = y + Math.floor(i / 3) * 54;
+        box(x0, y0, cw, 46, "#f4f7f3", LINE);
+        txt(k, x0 + 10, y0 + 8, {size: 8.5, color: MUTED}); txt(clip(v, cw - 20, 12.5, 700), x0 + 10, y0 + 23, {size: 12.5, weight: 700, color: GREEN});
+      });
+    y += 118;
+    txt("মাইলেজ = (বর্তমান ওডোমিটার − আগের ওডোমিটার) ÷ লিটার। প্রথম রেকর্ড বেসলাইন, তাই তার মাইলেজ হিসাব হয় না।", M, y, {size: 8, color: MUTED});
+
+    // --- ফুটার ---
+    pages.forEach((p, i) => { cur = p; txt(`পৃষ্ঠা ${i + 1} / ${pages.length}  •  Bike Fuel Log`, PW / 2, PH - 22, {size: 8, color: MUTED, align: "center"}); });
+
+    const imgs = [];
+    for (const p of pages) {
+      const blob = await new Promise(res => p.c.toBlob(res, "image/jpeg", 0.92));
+      if (!blob) throw new Error("canvas");
+      imgs.push({bytes: new Uint8Array(await blob.arrayBuffer()), w: p.c.width, h: p.c.height});
+    }
+    return assemblePdf(imgs);
+  }
+
+  async function runExport(btn, work, okMsg, failMsg) {
+    if (!records.length) { reportMsg("রিপোর্টের জন্য আগে অন্তত একটি ফুয়েল রেকর্ড যোগ করুন।", true); return; }
+    const old = btn.textContent; btn.disabled = true; btn.textContent = "⏳ তৈরি হচ্ছে…";
+    try { await work(); reportMsg(okMsg); }
+    catch (err) { console.error(err); reportMsg(failMsg, true); }
+    finally { btn.disabled = false; btn.textContent = old; }
+  }
+
+  /* ============ ক্লিক হ্যান্ডলার ============ */
+  document.addEventListener("click", e => {
+    const g = e.target.closest("[data-go]");
+    if (g) { location.hash = g.dataset.go; return; }
+    const b = e.target.closest("[data-action]"); if (!b) return;
+    const act = b.dataset.action;
+    if (act === "csv") exportCsv();
+    else if (act === "json") exportJson();
+    else if (act === "xlsx") runExport(b, async () => download("bike-fuel-report.xlsx", buildXlsx()), "Excel রিপোর্ট ডাউনলোড শুরু হয়েছে।", "Excel রিপোর্ট তৈরি করা যায়নি।");
+    else if (act === "pdf") runExport(b, async () => download("bike-fuel-report.pdf", await buildPdf()), "PDF রিপোর্ট ডাউনলোড শুরু হয়েছে।", "PDF রিপোর্ট তৈরি করা যায়নি। আবার চেষ্টা করুন।");
+  });
+  $("addColBtn").addEventListener("click", () => openColumnEditor(null));
+  $("addRowBtn").addEventListener("click", () => openRowEditor(null));
+
+  /* ============ শুরু ============ */
+  fillProfile();
+  buildEntryForm();
+  renderAll();
+  route();
+})();
+</script>
+</body>
+</html>
