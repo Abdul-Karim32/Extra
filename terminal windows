@@ -1,3 +1,5 @@
 "powercfg /batteryreport"  use this in cmd for checking battery health of laptop
 
 "wmic path SoftwareLicensingService get OA3xOriginalProductKey" for windows product key
+
+python -c "import torch, numpy, pandas, matplotlib; print('All libraries working')"    // checking those things are working?
